@@ -87,7 +87,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param ProductViewTransfer $productViewTransfer
+     * @param  ProductViewTransfer $productViewTransfer
      * @return array
      */
     protected function getOffers(ProductViewTransfer $productViewTransfer): array
@@ -110,11 +110,10 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function getPrice(ProductViewTransfer $productViewTransfer): float
     {
-        if (
-            !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $productViewTransfer->getAttributes()) ||
-            !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $productViewTransfer->getAttributes()) ||
-            !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE] ||
-            !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
+        if (!array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $productViewTransfer->getAttributes())
+            || !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $productViewTransfer->getAttributes())
+            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]
+            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
         ) {
             return $productViewTransfer->getPrice();
         }

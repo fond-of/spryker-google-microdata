@@ -8,7 +8,7 @@ use Silex\Application;
 
 /**
  * @package FondOfSpryker\Yves\GoogleMicrodata\Plugin\Provider
- * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
+ * @method  \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
  */
 class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements ServiceProviderInterface
 {
@@ -17,6 +17,7 @@ class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements Servi
      *
      * This method should only be used to configure services and parameters.
      * It should not get services.
+     *
      * @param \Silex\Application $app
      */
     public function register(Application $app)
