@@ -61,17 +61,17 @@ class GoogleMicrodataTwigExtension extends TwigExtension
     public function renderMicroData(\Twig_Environment $twig, $page, $params): string
     {
         switch ($page) {
-        case GoogleMicrodataConstants::PAGE_TYPE_PRODUCT:
-            /** @var ProductFeedBuilderPlugin $productFeedBuilder */
-            $productFeedBuilder = $this->feedBuilderPlugins[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
-            $feedData = $productFeedBuilder->getFeed($params);
+            case GoogleMicrodataConstants::PAGE_TYPE_PRODUCT:
+                /** @var ProductFeedBuilderPlugin $productFeedBuilder */
+                $productFeedBuilder = $this->feedBuilderPlugins[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
+                $feedData = $productFeedBuilder->getFeed($params);
 
-            break;
+                break;
         }
 
         return $twig->render(
             $this->getMicrodataTemplateName(), [
-            'feed' => $feedData,
+                'feed' => $feedData,
             ]
         );
     }
