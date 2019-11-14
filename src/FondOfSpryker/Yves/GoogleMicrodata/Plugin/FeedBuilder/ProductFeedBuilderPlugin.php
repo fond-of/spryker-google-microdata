@@ -7,7 +7,8 @@ use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataOffersTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
 use Generated\Shared\Transfer\ProductImageStorageTransfer;
-use Generated\Shared\Transfer\ProductViewTransfer;
+use Generated\Shared\Transfer\StorageProductImageTransfer;
+use Generated\Shared\Transfer\StorageProductTransfer;
 use Spryker\Yves\Kernel\AbstractPlugin;
 
 /**
@@ -57,21 +58,21 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function handle(array $params): array
     {
-        /** @var ProductViewTransfer $productViewTransfer */
-        $productViewTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
+        /** @var StorageProductTransfer $storageProductTransfer */
+        $storageProductTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
 
         $googleMicrodataTransfer = new GoogleMicrodataTransfer();
-        $googleMicrodataTransfer->setName($productViewTransfer->getName());
-        $googleMicrodataTransfer->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription());
-        $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
+        $googleMicrodataTransfer->setName($storageProductTransfer->getName());
+        $googleMicrodataTransfer->setDescription($storageProductTransfer->getDescription() ?: $storageProductTransfer->getMetaDescription());
+        $googleMicrodataTransfer->setSku($storageProductTransfer->getSku());
 
-        /** @var ProductImageStorageTransfer $productImageStorageTransfer */
-        if (array_key_exists('image', $params)) {
-            $productImageStorageTransfer = $params['image'];
-            $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
+        /** @var StorageProductImageTransfer $storageProductImageTransfer */
+        if (array_key_exists('image', $params) && $params['image'] instanceof StorageProductImageTransfer) {
+            $storageProductImageTransfer = $params['image'];
+            $googleMicrodataTransfer->setImage($storageProductImageTransfer->getExternalUrlLarge());
         }
 
-        $googleMicrodataTransfer->setOffers($this->getOffers($productViewTransfer));
+        $googleMicrodataTransfer->setOffers($this->getOffers($storageProductTransfer));
         $googleMicrodataTransfer->setBrand($this->getBrand());
 
         return array_merge(
@@ -81,7 +82,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param ProductViewTransfer $productViewTransfer
+     * @param StorageProductTransfer $storageProductTransfer
      *
      * @return array
      */
@@ -97,16 +98,16 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param  ProductViewTransfer $productViewTransfer
+     * @param  StorageProductTransfer $storageProductTransfer
      * @return array
      */
-    protected function getOffers(ProductViewTransfer $productViewTransfer): array
+    protected function getOffers(StorageProductTransfer $storageProductTransfer): array
     {
         $googleMicrodataOffersTransfer = new GoogleMicrodataOffersTransfer();
-        $googleMicrodataOffersTransfer->setPrice(round($this->getPrice($productViewTransfer)/100, 2));
+        $googleMicrodataOffersTransfer->setPrice(round($this->getPrice($storageProductTransfer)/100, 2));
         $googleMicrodataOffersTransfer->setPriceCurrency($this->getFactory()->getStore()->getCurrencyIsoCode());
-        $googleMicrodataOffersTransfer->setUrl($this->getFactory()->getGoogleMicrodataConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl());
-        $googleMicrodataOffersTransfer->setAvailability($this->getAvailability($productViewTransfer));
+        $googleMicrodataOffersTransfer->setUrl($this->getFactory()->getGoogleMicrodataConfig()->getYvesHost() . '/' . $storageProductTransfer->getUrl());
+        $googleMicrodataOffersTransfer->setAvailability($this->getAvailability($storageProductTransfer));
 
         return array_merge(
             [static::TYPE => static::TYPE_OFFER],
@@ -115,19 +116,19 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param ProductViewTransfer $productViewTransfer
+     * @param StorageProductTransfer $storageProductTransfer
      *
      * @return string
      */
-    protected function getAvailability(ProductViewTransfer $productViewTransfer): string
+    protected function getAvailability(StorageProductTransfer $storageProductTransfer): string
     {
-        if (array_key_exists(static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT, $productViewTransfer->getAttributes())
-            && $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT] === 'yes'
+        if (array_key_exists(static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT, $storageProductTransfer->getAttributes())
+            && $storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT] === 'yes'
         ) {
             return static::SCHEMA_OUT_OF_STOCK;
         }
 
-        if ($productViewTransfer->getAvailable() === false) {
+        if ($storageProductTransfer->getAvailable() === false) {
             return static::SCHEMA_OUT_OF_STOCK;
         }
 
@@ -135,33 +136,33 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param ProductViewTransfer $productViewTransfer
+     * @param StorageProductTransfer $storageProductTransfer
      *
      * @return float
      *
      * @throws
      */
-    protected function getPrice(ProductViewTransfer $productViewTransfer): float
+    protected function getPrice(StorageProductTransfer $storageProductTransfer): float
     {
-        if (!array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $productViewTransfer->getAttributes())
-            || !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $productViewTransfer->getAttributes())
-            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]
-            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
+        if (!array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $storageProductTransfer->getAttributes())
+            || !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $storageProductTransfer->getAttributes())
+            || !$storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]
+            || !$storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
         ) {
-            return $productViewTransfer->getPrice();
+            return $storageProductTransfer->getPrice();
         }
 
         $current = new \DateTime();
-        $from = new \DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
-        $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
-            $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
-                ? new \DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
+        $from = new \DateTime($storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
+        $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $storageProductTransfer->getAttributes()) &&
+            $storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
+                ? new \DateTime($storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
                 : null;
 
         if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
-            return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+            return $storageProductTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
         }
 
-        return $productViewTransfer->getPrice();
+        return $storageProductTransfer->getPrice();
     }
 }
