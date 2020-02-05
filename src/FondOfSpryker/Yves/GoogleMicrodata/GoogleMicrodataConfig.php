@@ -1,8 +1,6 @@
 <?php
 
-
 namespace FondOfSpryker\Yves\GoogleMicrodata;
-
 
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Spryker\Yves\Kernel\AbstractBundleConfig;

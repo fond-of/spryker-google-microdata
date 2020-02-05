@@ -3,9 +3,9 @@
 namespace FondOfSpryker\Yves\GoogleMicrodata\Twig;
 
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
-use FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder\ProductFeedBuilderPlugin;
-use Spryker\Shared\Kernel\Store;
 use Spryker\Shared\Twig\TwigExtension;
+use Twig_Environment;
+use Twig_SimpleFunction;
 
 class GoogleMicrodataTwigExtension extends TwigExtension
 {
@@ -37,9 +37,9 @@ class GoogleMicrodataTwigExtension extends TwigExtension
     /**
      * @return \Twig_SimpleFunction
      */
-    protected function createMicrodataFunction(): \Twig_SimpleFunction
+    protected function createMicrodataFunction(): Twig_SimpleFunction
     {
-        return new \Twig_SimpleFunction(
+        return new Twig_SimpleFunction(
             static::FUNCTION_GOOGLE_MICRODATA,
             [$this, 'renderMicroData'],
             [
@@ -55,14 +55,12 @@ class GoogleMicrodataTwigExtension extends TwigExtension
      * @param $params
      *
      * @return string
-     *
-     * @throws
      */
-    public function renderMicroData(\Twig_Environment $twig, $page, $params): string
+    public function renderMicroData(Twig_Environment $twig, $page, $params): string
     {
         switch ($page) {
             case GoogleMicrodataConstants::PAGE_TYPE_PRODUCT:
-                /** @var ProductFeedBuilderPlugin $productFeedBuilder */
+                /** @var \FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder\ProductFeedBuilderPlugin $productFeedBuilder */
                 $productFeedBuilder = $this->feedBuilderPlugins[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
                 $feedData = $productFeedBuilder->getFeed($params);
 
@@ -70,7 +68,8 @@ class GoogleMicrodataTwigExtension extends TwigExtension
         }
 
         return $twig->render(
-            $this->getMicrodataTemplateName(), [
+            $this->getMicrodataTemplateName(),
+            [
                 'feed' => $feedData,
             ]
         );

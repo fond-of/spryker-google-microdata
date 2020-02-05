@@ -9,7 +9,7 @@ use Spryker\Yves\Kernel\AbstractFactory;
 class GoogleMicrodataFactory extends AbstractFactory
 {
     /**
-     * @return GoogleMicrodataTwigExtension
+     * @return \FondOfSpryker\Yves\GoogleMicrodata\Twig\GoogleMicrodataTwigExtension
      */
     public function createGoogleMicrodataTwigExtension(): GoogleMicrodataTwigExtension
     {
@@ -20,8 +20,6 @@ class GoogleMicrodataFactory extends AbstractFactory
 
     /**
      * @return \FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder\FeedBuilderInterface[]
-     *
-     * @throws
      */
     protected function getFeedBuilderPlugins(): array
     {
@@ -29,7 +27,7 @@ class GoogleMicrodataFactory extends AbstractFactory
     }
 
     /**
-     * @return Store
+     * @return \Spryker\Shared\Kernel\Store
      */
     public function getStore(): Store
     {
@@ -37,7 +35,7 @@ class GoogleMicrodataFactory extends AbstractFactory
     }
 
     /**
-     * @return GoogleMicrodataConfig
+     * @return \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataConfig
      */
     public function getGoogleMicrodataConfig(): GoogleMicrodataConfig
     {

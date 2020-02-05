@@ -12,9 +12,9 @@ class GoogleMicrodataDependencyProvider extends AbstractBundleDependencyProvider
     public const PLUGINS_FEEDBUILDER = 'PLUGINS_FEEDBUILDER';
 
     /**
-     * @param Container $container
+     * @param \Spryker\Yves\Kernel\Container $container
      *
-     * @return Container
+     * @return \Spryker\Yves\Kernel\Container
      */
     public function provideDependencies(Container $container): Container
     {
@@ -24,9 +24,9 @@ class GoogleMicrodataDependencyProvider extends AbstractBundleDependencyProvider
     }
 
     /**
-     * @param Container $container
+     * @param \Spryker\Yves\Kernel\Container $container
      *
-     * @return Container
+     * @return \Spryker\Yves\Kernel\Container
      */
     protected function addFeedBuilderPlugins(Container $container): Container
     {
