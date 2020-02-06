@@ -52,12 +52,13 @@ class GoogleMicrodataTwigExtension extends TwigExtension
     /**
      * @param \Twig_Environment $twig
      * @param $page
-     * @param $params
+     * @param array $params
      *
      * @return string
      */
-    public function renderMicroData(Twig_Environment $twig, $page, $params): string
+    public function renderMicroData(Twig_Environment $twig, $page, array $params): string
     {
+        $feedData = null;
         switch ($page) {
             case GoogleMicrodataConstants::PAGE_TYPE_PRODUCT:
                 /** @var \FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder\ProductFeedBuilderPlugin $productFeedBuilder */

@@ -80,8 +80,6 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
-     *
      * @return array
      */
     protected function getBrand(): array
