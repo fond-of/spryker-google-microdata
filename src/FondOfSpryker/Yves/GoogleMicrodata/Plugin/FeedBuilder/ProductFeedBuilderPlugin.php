@@ -157,15 +157,19 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             return $productViewTransfer->getPrice();
         }
 
-        $current = new DateTime();
-        $from = new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
-        $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
+        try {
+            $current = new DateTime();
+            $from = new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
+            $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
             $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
                 ? new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
                 : null;
 
-        if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
-            return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+            if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
+                return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+            }
+        } catch (Exception $exception) {
+            $this->getLogger()->error($exception->getMessage(), $exception->getTrace());
         }
 
         return $productViewTransfer->getPrice();
