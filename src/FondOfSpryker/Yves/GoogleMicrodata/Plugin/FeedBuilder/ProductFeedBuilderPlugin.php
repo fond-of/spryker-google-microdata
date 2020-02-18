@@ -3,11 +3,13 @@
 namespace FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder;
 
 use DateTime;
+use Exception;
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataOffersTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
 use Generated\Shared\Transfer\ProductViewTransfer;
+use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Yves\Kernel\AbstractPlugin;
 
 /**
@@ -15,6 +17,8 @@ use Spryker\Yves\Kernel\AbstractPlugin;
  */
 class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInterface
 {
+    use LoggerTrait;
+
     public const CONTEXT = '@context';
     public const TYPE = '@type';
     public const TYPE_OFFER = 'Offer';
@@ -56,30 +60,36 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function handle(array $params): array
     {
+        try {
         /** @var \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer */
-        $productViewTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
+            $productViewTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
 
-        $googleMicrodataTransfer = new GoogleMicrodataTransfer();
-        $googleMicrodataTransfer->setName($productViewTransfer->getName());
-        $googleMicrodataTransfer->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription());
-        $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
+            $googleMicrodataTransfer = new GoogleMicrodataTransfer();
+            $googleMicrodataTransfer->setName($productViewTransfer->getName());
+            $googleMicrodataTransfer->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription());
+            $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
 
         /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
-        if (array_key_exists('image', $params)) {
-            $productImageStorageTransfer = $params['image'];
-            $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
+            if (array_key_exists('image', $params)) {
+                $productImageStorageTransfer = $params['image'];
+                $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
+            }
+
+            $googleMicrodataTransfer->setOffers($this->getOffers($productViewTransfer));
+            $googleMicrodataTransfer->setBrand($this->getBrand());
+
+            return array_merge(
+                [static::CONTEXT => 'http://schema.org', static::TYPE => ucfirst($this->getName())],
+                $googleMicrodataTransfer->toArray(true, true)
+            );
+        } catch (Exception $exception) {
+            $this->getLogger()->error($exception->getMessage(), $exception->getTrace());
         }
-
-        $googleMicrodataTransfer->setOffers($this->getOffers($productViewTransfer));
-        $googleMicrodataTransfer->setBrand($this->getBrand());
-
-        return array_merge(
-            [static::CONTEXT => 'http://schema.org', static::TYPE => ucfirst($this->getName())],
-            $googleMicrodataTransfer->toArray(true, true)
-        );
     }
 
     /**
+     * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
+     *
      * @return array
      */
     protected function getBrand(): array
@@ -147,15 +157,19 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             return $productViewTransfer->getPrice();
         }
 
-        $current = new DateTime();
-        $from = new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
-        $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
+        try {
+            $current = new DateTime();
+            $from = new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
+            $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
             $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
                 ? new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
                 : null;
 
-        if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
-            return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+            if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
+                return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+            }
+        } catch (Exception $exception) {
+            $this->getLogger()->error($exception->getMessage(), $exception->getTrace());
         }
 
         return $productViewTransfer->getPrice();
