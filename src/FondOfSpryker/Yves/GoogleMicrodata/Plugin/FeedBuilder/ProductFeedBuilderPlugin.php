@@ -8,6 +8,7 @@ use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataOffersTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
+use Generated\Shared\Transfer\ProductImageStorageTransfer;
 use Generated\Shared\Transfer\ProductViewTransfer;
 use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Yves\Kernel\AbstractPlugin;
@@ -61,7 +62,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     protected function handle(array $params): array
     {
         try {
-        /** @var \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer */
+            /** @var \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer */
             $productViewTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
 
             $googleMicrodataTransfer = new GoogleMicrodataTransfer();
@@ -69,8 +70,8 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             $googleMicrodataTransfer->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription());
             $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
 
-        /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
-            if (array_key_exists('image', $params)) {
+            /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
+            if (array_key_exists('image', $params) && $params['image'] instanceof ProductImageStorageTransfer) {
                 $productImageStorageTransfer = $params['image'];
                 $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
             }
@@ -78,8 +79,10 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             $googleMicrodataTransfer->setOffers($this->getOffers($productViewTransfer));
             $googleMicrodataTransfer->setBrand($this->getBrand());
 
-            return array_merge(
-                [static::CONTEXT => 'http://schema.org', static::TYPE => ucfirst($this->getName())],
+            return array_merge([
+                    static::CONTEXT => 'http://schema.org',
+                    static::TYPE => ucfirst($this->getName())
+                ],
                 $googleMicrodataTransfer->toArray(true, true)
             );
         } catch (Exception $exception) {
