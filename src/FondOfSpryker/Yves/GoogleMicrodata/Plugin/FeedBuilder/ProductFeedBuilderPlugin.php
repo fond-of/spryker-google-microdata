@@ -70,7 +70,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
 
         /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
-            if (array_key_exists('image', $params)) {
+            if (!empty($params['image']) && method_exists($params['image'], 'getExternalUrlLarge')) {
                 $productImageStorageTransfer = $params['image'];
                 $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
             }
