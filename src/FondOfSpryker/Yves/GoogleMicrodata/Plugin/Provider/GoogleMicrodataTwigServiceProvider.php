@@ -2,13 +2,14 @@
 
 namespace FondOfSpryker\Yves\GoogleMicrodata\Plugin\Provider;
 
+use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Spryker\Yves\Kernel\AbstractPlugin;
-use Silex\Application;
+use Twig_Environment;
 
 /**
  * @package FondOfSpryker\Yves\GoogleMicrodata\Plugin\Provider
- * @method  \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
+ * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
  */
 class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements ServiceProviderInterface
 {
@@ -29,7 +30,7 @@ class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements Servi
         $app['twig'] = $app->share(
             $app->extend(
                 'twig',
-                function (\Twig_Environment $twig) use ($twigExtension) {
+                function (Twig_Environment $twig) use ($twigExtension) {
                     $twig->addExtension($twigExtension);
 
                     return $twig;
@@ -44,6 +45,8 @@ class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements Servi
      * This method is called after all services are registered
      * and should be used for "dynamic" configuration (whenever
      * a service must be requested).
+     *
+     * @return void
      */
     public function boot(Application $app)
     {
