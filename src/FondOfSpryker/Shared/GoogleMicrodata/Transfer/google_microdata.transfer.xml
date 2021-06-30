@@ -20,6 +20,7 @@
         <property name="url" type="string"/>
         <property name="priceCurrency" type="string"/>
         <property name="price" type="float"/>
+        <property name="salePrice" type="float"/>
         <property name="availability" type="string"/>
     </transfer>
 

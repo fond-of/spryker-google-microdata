@@ -4,12 +4,16 @@ namespace FondOfSpryker\Yves\GoogleMicrodata;
 
 use FondOfSpryker\Yves\GoogleMicrodata\Twig\GoogleMicrodataTwigExtension;
 use Spryker\Shared\Kernel\Store;
+use Spryker\Shared\Money\Dependency\Plugin\MoneyPluginInterface;
 use Spryker\Yves\Kernel\AbstractFactory;
 
+/**
+ * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataConfig getConfig()
+ */
 class GoogleMicrodataFactory extends AbstractFactory
 {
     /**
-     * @return GoogleMicrodataTwigExtension
+     * @return \FondOfSpryker\Yves\GoogleMicrodata\Twig\GoogleMicrodataTwigExtension
      */
     public function createGoogleMicrodataTwigExtension(): GoogleMicrodataTwigExtension
     {
@@ -20,8 +24,6 @@ class GoogleMicrodataFactory extends AbstractFactory
 
     /**
      * @return \FondOfSpryker\Yves\GoogleMicrodata\Plugin\FeedBuilder\FeedBuilderInterface[]
-     *
-     * @throws
      */
     protected function getFeedBuilderPlugins(): array
     {
@@ -29,18 +31,18 @@ class GoogleMicrodataFactory extends AbstractFactory
     }
 
     /**
-     * @return Store
+     * @return \Spryker\Shared\Kernel\Store
      */
     public function getStore(): Store
     {
-        return Store::getInstance();
+        return $this->getProvidedDependency(GoogleMicrodataDependencyProvider::STORE);
     }
 
     /**
-     * @return GoogleMicrodataConfig
+     * @return \Spryker\Shared\Kernel\Store
      */
-    public function getGoogleMicrodataConfig(): GoogleMicrodataConfig
+    public function getMoneyPlugin(): MoneyPluginInterface
     {
-        return $this->getConfig();
+        return $this->getProvidedDependency(GoogleMicrodataDependencyProvider::PLUGIN_MONEY);
     }
 }
