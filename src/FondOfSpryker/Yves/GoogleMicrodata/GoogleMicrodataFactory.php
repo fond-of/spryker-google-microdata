@@ -4,8 +4,12 @@ namespace FondOfSpryker\Yves\GoogleMicrodata;
 
 use FondOfSpryker\Yves\GoogleMicrodata\Twig\GoogleMicrodataTwigExtension;
 use Spryker\Shared\Kernel\Store;
+use Spryker\Shared\Money\Dependency\Plugin\MoneyPluginInterface;
 use Spryker\Yves\Kernel\AbstractFactory;
 
+/**
+ * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataConfig getConfig()
+ */
 class GoogleMicrodataFactory extends AbstractFactory
 {
     /**
@@ -31,14 +35,14 @@ class GoogleMicrodataFactory extends AbstractFactory
      */
     public function getStore(): Store
     {
-        return Store::getInstance();
+        return $this->getProvidedDependency(GoogleMicrodataDependencyProvider::STORE);
     }
 
     /**
-     * @return \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataConfig
+     * @return \Spryker\Shared\Money\Dependency\Plugin\MoneyPluginInterface
      */
-    public function getGoogleMicrodataConfig(): GoogleMicrodataConfig
+    public function getMoneyPlugin(): MoneyPluginInterface
     {
-        return $this->getConfig();
+        return $this->getProvidedDependency(GoogleMicrodataDependencyProvider::PLUGIN_MONEY);
     }
 }

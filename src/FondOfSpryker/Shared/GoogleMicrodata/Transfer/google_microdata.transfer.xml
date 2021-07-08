@@ -15,12 +15,4 @@
     <transfer name="GoogleMicrodataBrand">
         <property name="name" type="string"/>
     </transfer>
-
-    <transfer name="GoogleMicrodataOffers">
-        <property name="url" type="string"/>
-        <property name="priceCurrency" type="string"/>
-        <property name="price" type="float"/>
-        <property name="availability" type="string"/>
-    </transfer>
-
 </transfers>

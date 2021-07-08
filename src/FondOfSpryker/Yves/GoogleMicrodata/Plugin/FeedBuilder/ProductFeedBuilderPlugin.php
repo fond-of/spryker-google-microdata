@@ -6,7 +6,6 @@ use DateTime;
 use Exception;
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
-use Generated\Shared\Transfer\GoogleMicrodataOffersTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
 use Generated\Shared\Transfer\ProductViewTransfer;
 use Spryker\Shared\Log\LoggerTrait;
@@ -18,18 +17,6 @@ use Spryker\Yves\Kernel\AbstractPlugin;
 class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInterface
 {
     use LoggerTrait;
-
-    public const CONTEXT = '@context';
-    public const TYPE = '@type';
-    public const TYPE_OFFER = 'Offer';
-    public const TYPE_THING = 'Thing';
-    public const SCHEMA_IN_STOCK = 'http://schema.org/InStock';
-    public const SCHEMA_OUT_OF_STOCK = 'http://schema.org/OutOfStock';
-
-    public const PRODUCT_ATTRIBUTE_IS_SOLD_OUT = 'is_sold_out';
-    public const PRODUCT_ATTRIBUTE_SPECIAL_PRICE = 'special_price';
-    public const PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM = 'special_price_from';
-    public const PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO = 'special_price_to';
 
     /**
      * @return string
@@ -61,46 +48,48 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     protected function handle(array $params): array
     {
         try {
-        /** @var \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer */
+            /** @var \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer */
             $productViewTransfer = $params[GoogleMicrodataConstants::PAGE_TYPE_PRODUCT];
 
-            $googleMicrodataTransfer = new GoogleMicrodataTransfer();
-            $googleMicrodataTransfer->setName($productViewTransfer->getName());
-            $googleMicrodataTransfer->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription());
-            $googleMicrodataTransfer->setSku($productViewTransfer->getSku());
+            $googleMicrodataTransfer = (new GoogleMicrodataTransfer())
+                ->setName($productViewTransfer->getName())
+                ->setDescription($productViewTransfer->getDescription() ?: $productViewTransfer->getMetaDescription())
+                ->setSku($productViewTransfer->getSku())
+                ->setOffers($this->getOffers($productViewTransfer))
+                ->setBrand($this->getBrand());
 
-        /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
+            /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
             if (!empty($params['image']) && method_exists($params['image'], 'getExternalUrlLarge')) {
                 $productImageStorageTransfer = $params['image'];
                 $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
             }
 
-            $googleMicrodataTransfer->setOffers($this->getOffers($productViewTransfer));
-            $googleMicrodataTransfer->setBrand($this->getBrand());
-
-            return array_merge(
-                [static::CONTEXT => 'http://schema.org', static::TYPE => ucfirst($this->getName())],
-                $googleMicrodataTransfer->toArray(true, true)
-            );
+            return array_merge([
+                GoogleMicrodataConstants::CONTEXT => 'http://schema.org',
+                GoogleMicrodataConstants::TYPE => ucfirst($this->getName()),
+                ], $googleMicrodataTransfer->toArray(true, true));
         } catch (Exception $exception) {
             $this->getLogger()->error($exception->getMessage(), $exception->getTrace());
         }
+
+        return [];
     }
 
     /**
-     * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
-     *
      * @return array
      */
     protected function getBrand(): array
     {
-        $store = $this->getFactory()->getStore();
-        $storeNameArray = explode("_", $store->getStoreName());
+        $storeName = $this->getFactory()
+            ->getStore()
+            ->getStoreName();
 
-        $googleMicrodataBrandTransfer = new GoogleMicrodataBrandTransfer();
-        $googleMicrodataBrandTransfer->setName(ucfirst(strtolower($storeNameArray[0])));
+        $storeNameArray = explode('_', $storeName);
 
-        return array_merge([static::TYPE => static::TYPE_THING], $googleMicrodataBrandTransfer->toArray(true, true));
+        $googleMicrodataBrandTransfer = (new GoogleMicrodataBrandTransfer())
+            ->setName(ucfirst(strtolower($storeNameArray[0])));
+
+        return array_merge([GoogleMicrodataConstants::TYPE => GoogleMicrodataConstants::TYPE_THING], $googleMicrodataBrandTransfer->toArray(true, true));
     }
 
     /**
@@ -110,16 +99,39 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function getOffers(ProductViewTransfer $productViewTransfer): array
     {
-        $googleMicrodataOffersTransfer = new GoogleMicrodataOffersTransfer();
-        $googleMicrodataOffersTransfer->setPrice(round($this->getPrice($productViewTransfer) / 100, 2));
-        $googleMicrodataOffersTransfer->setPriceCurrency($this->getFactory()->getStore()->getCurrencyIsoCode());
-        $googleMicrodataOffersTransfer->setUrl($this->getFactory()->getGoogleMicrodataConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl());
-        $googleMicrodataOffersTransfer->setAvailability($this->getAvailability($productViewTransfer));
+        $currency = $this->getFactory()
+            ->getStore()
+            ->getCurrencyIsoCode();
 
-        return array_merge(
-            [static::TYPE => static::TYPE_OFFER],
-            $googleMicrodataOffersTransfer->toArray(true, true)
-        );
+        $price = $this->getFactory()
+            ->getMoneyPlugin()
+            ->convertIntegerToDecimal($productViewTransfer->getPrice());
+
+        $salePrice = $this->getSalePrice($productViewTransfer);
+
+        $offer = [
+            GoogleMicrodataConstants::TYPE => GoogleMicrodataConstants::TYPE_OFFER,
+            GoogleMicrodataConstants::PRODUCT_CURRENCY => $currency,
+            GoogleMicrodataConstants::PRODUCT_PRICE => $price,
+            GoogleMicrodataConstants::PRODUCT_URL => $this->getUrl($productViewTransfer),
+            GoogleMicrodataConstants::PRODUCT_AVAILABILITY => $this->getAvailability($productViewTransfer),
+        ];
+
+        if ($salePrice === null) {
+            return $offer;
+        }
+
+        return array_merge($offer, [GoogleMicrodataConstants::PRODUCT_SALE_PRICE => $salePrice]);
+    }
+
+    /**
+     * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
+     *
+     * @return string
+     */
+    protected function getUrl(ProductViewTransfer $productViewTransfer): string
+    {
+        return $this->getFactory()->getConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl();
     }
 
     /**
@@ -129,49 +141,53 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function getAvailability(ProductViewTransfer $productViewTransfer): string
     {
-        if (array_key_exists(static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT, $productViewTransfer->getAttributes())
-            && $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_IS_SOLD_OUT] === 'yes'
+        if (
+            array_key_exists(GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_IS_SOLD_OUT, $productViewTransfer->getAttributes())
+            && $productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_IS_SOLD_OUT] === 'yes'
         ) {
-            return static::SCHEMA_OUT_OF_STOCK;
+            return GoogleMicrodataConstants::SCHEMA_OUT_OF_STOCK;
         }
 
         if ($productViewTransfer->getAvailable() === false) {
-            return static::SCHEMA_OUT_OF_STOCK;
+            return GoogleMicrodataConstants::SCHEMA_OUT_OF_STOCK;
         }
 
-        return static::SCHEMA_IN_STOCK;
+        return GoogleMicrodataConstants::SCHEMA_IN_STOCK;
     }
 
     /**
      * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
      *
-     * @return float
+     * @return float|null
      */
-    protected function getPrice(ProductViewTransfer $productViewTransfer): float
+    protected function getSalePrice(ProductViewTransfer $productViewTransfer): ?float
     {
-        if (!array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $productViewTransfer->getAttributes())
-            || !array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $productViewTransfer->getAttributes())
-            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]
-            || !$productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
+        if (
+            !array_key_exists(GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE, $productViewTransfer->getAttributes())
+            || !array_key_exists(GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM, $productViewTransfer->getAttributes())
+            || !$productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]
+            || !$productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]
         ) {
-            return $productViewTransfer->getPrice();
+            return null;
         }
 
         try {
             $current = new DateTime();
-            $from = new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
-            $to = array_key_exists(static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
-            $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
-                ? new DateTime($productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
+            $from = new DateTime($productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_FROM]);
+            $to = array_key_exists(GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO, $productViewTransfer->getAttributes()) &&
+            $productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO]
+                ? new DateTime($productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE_TO])
                 : null;
 
             if (($from <= $current && $to === null) || ($from <= $current && $to >= $current)) {
-                return $productViewTransfer->getAttributes()[static::PRODUCT_ATTRIBUTE_SPECIAL_PRICE];
+                return $this->getFactory()
+                    ->getMoneyPlugin()
+                    ->convertIntegerToDecimal($productViewTransfer->getAttributes()[GoogleMicrodataConstants::PRODUCT_ATTRIBUTE_SPECIAL_PRICE]);
             }
         } catch (Exception $exception) {
             $this->getLogger()->error($exception->getMessage(), $exception->getTrace());
         }
 
-        return $productViewTransfer->getPrice();
+        return null;
     }
 }
