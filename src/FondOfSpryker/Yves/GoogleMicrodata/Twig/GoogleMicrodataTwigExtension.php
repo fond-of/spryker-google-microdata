@@ -50,7 +50,7 @@ class GoogleMicrodataTwigExtension extends TwigExtension
     }
 
     /**
-     * @param \Twig_Environment $twig
+     * @param Twig_Environment $twig
      * @param string $page
      * @param array $params
      *
@@ -58,7 +58,7 @@ class GoogleMicrodataTwigExtension extends TwigExtension
      */
     public function renderMicroData(Twig_Environment $twig, string $page, array $params): string
     {
-        $feedData = '';
+        $feedData = null;
 
         switch ($page) {
             case GoogleMicrodataConstants::PAGE_TYPE_PRODUCT:

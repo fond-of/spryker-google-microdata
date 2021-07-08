@@ -59,7 +59,9 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
                 ->setOffers($this->getOffers($productViewTransfer))
                 ->setBrand($this->getBrand());
 
-            if (array_key_exists('image', $params) && $params['image'] instanceof ProductImageStorageTransfer) {
+
+            /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
+            if (!empty($params['image']) && method_exists($params['image'], 'getExternalUrlLarge')) {
                 $productImageStorageTransfer = $params['image'];
                 $googleMicrodataTransfer->setImage($productImageStorageTransfer->getExternalUrlLarge());
             }

@@ -39,7 +39,7 @@ class GoogleMicrodataFactory extends AbstractFactory
     }
 
     /**
-     * @return \Spryker\Shared\Kernel\Store
+     * @return \Spryker\Shared\Money\Dependency\Plugin\MoneyPluginInterface
      */
     public function getMoneyPlugin(): MoneyPluginInterface
     {
