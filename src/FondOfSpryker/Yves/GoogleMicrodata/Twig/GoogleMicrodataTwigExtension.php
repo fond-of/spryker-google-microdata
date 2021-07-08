@@ -50,7 +50,7 @@ class GoogleMicrodataTwigExtension extends TwigExtension
     }
 
     /**
-     * @param Twig_Environment $twig
+     * @param \Twig_Environment $twig
      * @param string $page
      * @param array $params
      *

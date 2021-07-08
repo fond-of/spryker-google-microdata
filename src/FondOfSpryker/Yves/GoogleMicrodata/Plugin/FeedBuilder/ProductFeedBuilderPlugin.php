@@ -7,7 +7,6 @@ use Exception;
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
-use Generated\Shared\Transfer\ProductImageStorageTransfer;
 use Generated\Shared\Transfer\ProductViewTransfer;
 use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Yves\Kernel\AbstractPlugin;
@@ -58,7 +57,6 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
                 ->setSku($productViewTransfer->getSku())
                 ->setOffers($this->getOffers($productViewTransfer))
                 ->setBrand($this->getBrand());
-
 
             /** @var \Generated\Shared\Transfer\ProductImageStorageTransfer $productImageStorageTransfer */
             if (!empty($params['image']) && method_exists($params['image'], 'getExternalUrlLarge')) {
@@ -127,14 +125,14 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
     }
 
     /**
-     * @param ProductViewTransfer $productViewTransfer
+     * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
+     *
      * @return string
      */
     protected function getUrl(ProductViewTransfer $productViewTransfer): string
     {
         return $this->getFactory()->getConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl();
     }
-
 
     /**
      * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
