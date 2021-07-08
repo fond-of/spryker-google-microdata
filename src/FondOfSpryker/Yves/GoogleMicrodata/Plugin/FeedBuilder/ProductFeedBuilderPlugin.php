@@ -6,13 +6,11 @@ use DateTime;
 use Exception;
 use FondOfSpryker\Shared\GoogleMicrodata\GoogleMicrodataConstants;
 use Generated\Shared\Transfer\GoogleMicrodataBrandTransfer;
-use Generated\Shared\Transfer\GoogleMicrodataOffersTransfer;
 use Generated\Shared\Transfer\GoogleMicrodataTransfer;
 use Generated\Shared\Transfer\ProductImageStorageTransfer;
 use Generated\Shared\Transfer\ProductViewTransfer;
 use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Yves\Kernel\AbstractPlugin;
-use Spryker\Yves\Money\Plugin\MoneyPlugin;
 
 /**
  * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
@@ -101,18 +99,40 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
      */
     protected function getOffers(ProductViewTransfer $productViewTransfer): array
     {
-        $googleMicrodataOffersTransfer = (new GoogleMicrodataOffersTransfer())
-            ->setPrice($this->getFactory()->getMoneyPlugin()->convertIntegerToDecimal($productViewTransfer->getPrice()))
-            ->setPriceCurrency($this->getFactory()->getStore()->getCurrencyIsoCode())
-            ->setSalePrice($this->getSalePrice($productViewTransfer))
-            ->setUrl($this->getFactory()->getConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl())
-            ->setAvailability($this->getAvailability($productViewTransfer));
+        $currency = $this->getFactory()
+            ->getStore()
+            ->getCurrencyIsoCode();
 
-        return array_merge(
-            [GoogleMicrodataConstants::TYPE => GoogleMicrodataConstants::TYPE_OFFER],
-            $googleMicrodataOffersTransfer->toArray(true, true)
-        );
+        $price = $this->getFactory()
+            ->getMoneyPlugin()
+            ->convertIntegerToDecimal($productViewTransfer->getPrice());
+
+        $salePrice = $this->getSalePrice($productViewTransfer);
+
+        $offer = [
+            GoogleMicrodataConstants::TYPE => GoogleMicrodataConstants::TYPE_OFFER,
+            GoogleMicrodataConstants::PRODUCT_CURRENCY => $currency,
+            GoogleMicrodataConstants::PRODUCT_PRICE => $price,
+            GoogleMicrodataConstants::PRODUCT_URL => $this->getUrl($productViewTransfer),
+            GoogleMicrodataConstants::PRODUCT_AVAILABILITY => $this->getAvailability($productViewTransfer),
+        ];
+
+        if ($salePrice === null) {
+            return $offer;
+        }
+
+        return array_merge($offer, [GoogleMicrodataConstants::PRODUCT_SALE_PRICE => $salePrice]);
     }
+
+    /**
+     * @param ProductViewTransfer $productViewTransfer
+     * @return string
+     */
+    protected function getUrl(ProductViewTransfer $productViewTransfer): string
+    {
+        return $this->getFactory()->getConfig()->getYvesHost() . '/' . $productViewTransfer->getUrl();
+    }
+
 
     /**
      * @param \Generated\Shared\Transfer\ProductViewTransfer $productViewTransfer
