@@ -8,7 +8,6 @@ use Spryker\Yves\Kernel\AbstractPlugin;
 use Twig_Environment;
 
 /**
- * @package FondOfSpryker\Yves\GoogleMicrodata\Plugin\Provider
  * @method \FondOfSpryker\Yves\GoogleMicrodata\GoogleMicrodataFactory getFactory()
  */
 class GoogleMicrodataTwigServiceProvider extends AbstractPlugin implements ServiceProviderInterface
