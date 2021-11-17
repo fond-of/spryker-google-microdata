@@ -112,7 +112,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
         $offer = [
             GoogleMicrodataConstants::TYPE => GoogleMicrodataConstants::TYPE_OFFER,
             GoogleMicrodataConstants::PRODUCT_CURRENCY => $currency,
-            GoogleMicrodataConstants::PRODUCT_PRICE => $price,
+            GoogleMicrodataConstants::PRODUCT_PRICE => $salePrice !== null ? $salePrice : $price,
             GoogleMicrodataConstants::PRODUCT_URL => $this->getUrl($productViewTransfer),
             GoogleMicrodataConstants::PRODUCT_AVAILABILITY => $this->getAvailability($productViewTransfer),
         ];
@@ -121,7 +121,7 @@ class ProductFeedBuilderPlugin extends AbstractPlugin implements FeedBuilderInte
             return $offer;
         }
 
-        return array_merge($offer, [GoogleMicrodataConstants::PRODUCT_SALE_PRICE => $salePrice]);
+        return $offer;
     }
 
     /**
